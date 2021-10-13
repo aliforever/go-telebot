@@ -46,10 +46,6 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		reflectType:  t,
 	}
 	bot.updateHandlers = updateHandlersFromType(bot, t)
-	/*	bot.callbackHandlerMethod, _ = t.MethodByName("CallbackHandler")
-		bot.chatTypeGroupHandler, _ = t.MethodByName("ChatTypeGroupHandler")
-		bot.chatTypeChannelHandler, _ = t.MethodByName("ChatTypeChannelHandler")
-		bot.updateTypeChatMemberHandler, _ = t.MethodByName("UpdateTypeChatMemberHandler")*/
 	var v = reflect.ValueOf(app)
 	if reflect.ValueOf(app).Kind() == reflect.Ptr {
 		v = v.Elem()
