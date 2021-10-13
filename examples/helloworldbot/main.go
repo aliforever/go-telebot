@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	token := ""
+	token := "796493295:AAE3EGLAnba_XAsp_ts3sbPTHpW3nitBc4s"
 
 	var (
 		bot *telebot.Bot
