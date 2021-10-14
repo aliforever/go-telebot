@@ -15,13 +15,14 @@ import (
 )
 
 type Bot struct {
-	token          string
-	botInterface   interface{}
-	api            *go_telegram_bot_api.TelegramBot
-	stateStorage   UserStateStorage
-	reflectType    reflect.Type
-	updateHandlers *updateHandlers
-	isOfAPIType    bool
+	token            string
+	botInterface     interface{}
+	api              *go_telegram_bot_api.TelegramBot
+	stateStorage     UserStateStorage
+	reflectType      reflect.Type
+	updateHandlers   *updateHandlers
+	middlewareMethod reflect.Method
+	isOfAPIType      bool
 }
 
 func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *go_telegram_bot_api.TelegramBot, err error) {
@@ -46,6 +47,7 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		reflectType:  t,
 	}
 	bot.updateHandlers = updateHandlersFromType(bot, t)
+	bot.middlewareMethod, _ = t.MethodByName("Middleware")
 	var v = reflect.ValueOf(app)
 	if reflect.ValueOf(app).Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -108,12 +110,26 @@ func (bot *Bot) invoke(update *go_telegram_bot_api.Update, method string, isSwit
 	}
 }
 
+func (bot *Bot) invokeMiddleware(update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
+	if bot.middlewareMethod.Name == "" {
+		return
+	}
+	values := bot.middlewareMethod.Func.Call(bot.newAppWithUpdate(nil, update))
+	if len(values) == 1 {
+		ignoreUpdate, _ = values[0].Interface().(bool)
+	}
+	return
+}
+
 func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("recovered from panic: %s\n%s", err, debug.Stack())
 		}
 	}()
+	if ignoreUpdate := bot.invokeMiddleware(update); ignoreUpdate {
+		return
+	}
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message

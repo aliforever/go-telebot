@@ -98,6 +98,11 @@ func NewBot(token string) (err error) {
 		return
 	}
 
+	err = ioutil.WriteFile(path+"/app/appmiddleware.go", []byte(appMiddlewareTemplate()), 644)
+	if err != nil {
+		return
+	}
+
 	goImportsPath(path + "/main.go")
 	goImportsPath(path + "/app/app.go")
 	goImportsPath(path + "/app/appprivate.go")
@@ -107,6 +112,7 @@ func NewBot(token string) (err error) {
 	goImportsPath(path + "/app/appmychatmember.go")
 	goImportsPath(path + "/app/appgroup.go")
 	goImportsPath(path + "/app/apppollanswer.go")
+	goImportsPath(path + "/app/appmiddleware.go")
 
 	return
 }

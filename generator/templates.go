@@ -88,6 +88,20 @@ func (app App) PollAnswerHandler(update *go_telegram_bot_api.Update) {
 	return
 }
 
+func appMiddlewareTemplate() (str string) {
+	str = `package app
+
+import (
+	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+)
+
+func (app App) Middleware(update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
+	return
+}
+`
+	return
+}
+
 func appGroupTemplate() (str string) {
 	str = `package app
 
