@@ -77,7 +77,7 @@ func (bot *Bot) updateReplyStateInternalError(update *go_telegram_bot_api.Update
 func (bot *Bot) newApp() reflect.Value {
 	app := reflect.New(bot.reflectType)
 
-	return app.Elem()
+	return app
 }
 
 func (bot *Bot) appWithUpdate(app reflect.Value, update *go_telegram_bot_api.Update, defaultRecipient *int64) []reflect.Value {
