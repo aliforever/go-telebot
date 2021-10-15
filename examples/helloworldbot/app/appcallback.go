@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"

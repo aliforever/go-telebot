@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/aliforever/go-telebot/examples/helloworldbot/app"
+
 	"github.com/aliforever/go-telebot"
 )
 
@@ -14,7 +16,7 @@ func main() {
 		err error
 	)
 
-	bot, _, err = telebot.NewBot(token, App{}, nil)
+	bot, _, err = telebot.NewBot(token, app.App{}, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

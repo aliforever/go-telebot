@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -60,6 +60,7 @@ func (app App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (new
 func (app App) Bye(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
 	if !isSwitched {
 		if update.Message.Text == "Back" {
+			fmt.Println(app.CustomField)
 			newState = "Welcome"
 			return
 		}
