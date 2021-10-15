@@ -79,61 +79,64 @@ func (uh *updateHandlers) handleProcessUpdateError(update *go_telegram_bot_api.U
 	log.Errorf("Error processing update: %s. Update: %s", message, j)
 }
 
-func (uh *updateHandlers) processMessageTypeGroup(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.messageTypeGroup.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for Group Message Type was not found!\n%s", string(j))
 		return
 	}
-	uh.messageTypeGroup.Func.Call(uh.bot.newAppWithUpdate(&update.Message.Chat.Id, update))
+	uh.messageTypeGroup.Func.Call(uh.bot.appWithUpdate(app, update, &update.Message.Chat.Id))
 }
 
-func (uh *updateHandlers) processChannelPost(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processChannelPost(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.channelPost.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for ChannelPost was not found!\n%s", string(j))
 		return
 	}
-	uh.channelPost.Func.Call(uh.bot.newAppWithUpdate(&update.ChannelPost.Chat.Id, update))
+
+	uh.channelPost.Func.Call(uh.bot.appWithUpdate(app, update, &update.ChannelPost.Chat.Id))
 }
 
-func (uh *updateHandlers) processMyChatMember(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.myChatMember.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for MyChatMember was not found!\n%s", string(j))
 		return
 	}
-	uh.myChatMember.Func.Call(uh.bot.newAppWithUpdate(&update.MyChatMember.Chat.Id, update))
+	uh.myChatMember.Func.Call(uh.bot.appWithUpdate(app, update, &update.MyChatMember.Chat.Id))
 }
 
-func (uh *updateHandlers) processChatMember(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processChatMember(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.chatMember.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for ChatMember was not found!\n%s", string(j))
 		return
 	}
-	uh.chatMember.Func.Call(uh.bot.newAppWithUpdate(&update.ChatMember.Chat.Id, update))
+
+	uh.chatMember.Func.Call(uh.bot.appWithUpdate(app, update, &update.ChatMember.Chat.Id))
 }
 
-func (uh *updateHandlers) processCallbackQuery(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processCallbackQuery(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.callbackQuery.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for CallbackQuery was not found!\n%s", string(j))
 		return
 	}
-	uh.callbackQuery.Func.Call(uh.bot.newAppWithUpdate(&update.CallbackQuery.Message.Chat.Id, update))
+
+	uh.callbackQuery.Func.Call(uh.bot.appWithUpdate(app, update, &update.CallbackQuery.Message.Chat.Id))
 }
 
-func (uh *updateHandlers) processPollAnswer(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *go_telegram_bot_api.Update) {
 	if uh.pollAnswer.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for PollAnswer was not found!\n%s", string(j))
 		return
 	}
-	uh.pollAnswer.Func.Call(uh.bot.newAppWithUpdate(&update.PollAnswer.User.Id, update))
+	uh.pollAnswer.Func.Call(uh.bot.appWithUpdate(app, update, &update.PollAnswer.User.Id))
 }
 
-func (uh *updateHandlers) processUpdate(update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processUpdate(app reflect.Value, update *go_telegram_bot_api.Update) {
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message
@@ -148,17 +151,17 @@ func (uh *updateHandlers) processUpdate(update *go_telegram_bot_api.Update) {
 		channelPost = update.EditedChannelPost
 	}
 	if message != nil && (message.Chat.Type == "group" || message.Chat.Type == "supergroup") {
-		uh.processMessageTypeGroup(update)
+		uh.processMessageTypeGroup(app, update)
 	} else if channelPost != nil {
-		uh.processChannelPost(update)
+		uh.processChannelPost(app, update)
 	} else if update.MyChatMember != nil {
-		uh.processMyChatMember(update)
+		uh.processMyChatMember(app, update)
 	} else if update.ChatMember != nil {
-		uh.processChatMember(update)
+		uh.processChatMember(app, update)
 	} else if update.CallbackQuery != nil {
-		uh.processCallbackQuery(update)
+		uh.processCallbackQuery(app, update)
 	} else if update.PollAnswer != nil {
-		uh.processPollAnswer(update)
+		uh.processPollAnswer(app, update)
 	} else {
 		uh.handleProcessUpdateError(update, "message_type_not_supported")
 	}

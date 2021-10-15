@@ -74,6 +74,24 @@ func (bot *Bot) updateReplyStateInternalError(update *go_telegram_bot_api.Update
 	return
 }
 
+func (bot *Bot) newApp() reflect.Value {
+	app := reflect.New(bot.reflectType)
+
+	return app.Elem()
+}
+
+func (bot *Bot) appWithUpdate(app reflect.Value, update *go_telegram_bot_api.Update, defaultRecipient *int64) []reflect.Value {
+	api := *bot.api
+
+	if bot.isOfAPIType {
+		if defaultRecipient != nil {
+			api.SetRecipientChatId(*defaultRecipient)
+		}
+		app.Field(0).Set(reflect.ValueOf(api))
+	}
+	return []reflect.Value{app, reflect.ValueOf(update)}
+}
+
 func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_bot_api.Update) []reflect.Value {
 	app := reflect.New(bot.reflectType)
 	api := *bot.api
@@ -86,35 +104,23 @@ func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
-func (bot *Bot) invoke(update *go_telegram_bot_api.Update, method string, isSwitched bool) {
-	app := reflect.New(bot.reflectType)
-	api := *bot.api
-	api.SetRecipientChatId(update.Message.Chat.Id)
-	if bot.isOfAPIType {
-		app.Elem().Field(0).Set(reflect.ValueOf(api))
-	}
-	fn := app.MethodByName(method)
-	values := fn.Call([]reflect.Value{reflect.ValueOf(update), reflect.ValueOf(isSwitched)})
+func (bot *Bot) invoke(app reflect.Value, update *go_telegram_bot_api.Update, method string, isSwitched bool) {
+	values := app.MethodByName(method).Call([]reflect.Value{reflect.ValueOf(update), reflect.ValueOf(isSwitched)})
 	if len(values) == 1 {
-		/*if values[0].Type().Implements(reflect.TypeOf((*go_telegram_bot_api.Config)(nil)).Elem()) {
-			if values[0].Interface() != nil {
-				api.Send(values[0].Interface().(go_telegram_bot_api.Config))
-			}
-		}*/
 		if val, ok := values[0].Interface().(string); ok {
 			if val != "" {
 				bot.stateStorage.SetUserState(update.Message.Chat.Id, val)
-				bot.invoke(update, val, true)
+				bot.invoke(app, update, val, true)
 			}
 		}
 	}
 }
 
-func (bot *Bot) invokeMiddleware(update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
+func (bot *Bot) invokeMiddleware(app reflect.Value, update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
 	if bot.middlewareMethod.Name == "" {
 		return
 	}
-	values := bot.middlewareMethod.Func.Call(bot.newAppWithUpdate(nil, update))
+	values := bot.middlewareMethod.Func.Call([]reflect.Value{app, reflect.ValueOf(update)})
 	if len(values) == 1 {
 		ignoreUpdate, _ = values[0].Interface().(bool)
 	}
@@ -127,7 +133,9 @@ func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
 			log.Errorf("recovered from panic: %s\n%s", err, debug.Stack())
 		}
 	}()
-	if ignoreUpdate := bot.invokeMiddleware(update); ignoreUpdate {
+
+	app := bot.newApp()
+	if ignoreUpdate := bot.invokeMiddleware(app, update); ignoreUpdate {
 		return
 	}
 	var message *structs.Message
@@ -147,13 +155,16 @@ func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
 			bot.updateReplyStateNotExists(update, state)
 			return
 		}
-		bot.invoke(update, state, false)
+		api := *bot.api
+		api.SetRecipientChatId(message.Chat.Id)
+		app.Field(0).Set(reflect.ValueOf(api))
+		bot.invoke(app, update, state, false)
 		return
 	}
 	if bot.updateHandlers == nil {
 		return
 	}
-	bot.updateHandlers.processUpdate(update)
+	bot.updateHandlers.processUpdate(app, update)
 	return
 }
 

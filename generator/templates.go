@@ -1,6 +1,41 @@
 package generator
 
-import "fmt"
+import (
+	"fmt"
+)
+
+func langInterface() (str string) {
+	str = `package langs
+
+type Language interface {
+	Flag() string
+	ChooseLanguageText() string
+	WelcomeMenu() string
+}
+`
+	return
+}
+
+func langFile(name string) (str string) {
+	str = `package langs
+
+type %s struct {
+}
+
+func (English) Flag() string {
+	return ""
+}
+
+func (English) WelcomeMenu() string {
+	return ""
+}
+
+func (English) ChooseLanguageText() string {
+	return ""
+}
+`
+	return fmt.Sprintf(str, name)
+}
 
 func mainTemplate(token string) (str string) {
 	str = `token := "%s"

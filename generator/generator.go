@@ -2,6 +2,7 @@ package generator
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -23,7 +24,7 @@ func goImportsPath(path string) {
 	return
 }
 
-func NewBot(token string) (err error) {
+func NewBot(token string, langs []string) (err error) {
 	var path string
 	path, err = commandPath()
 	if err != nil {
@@ -103,6 +104,35 @@ func NewBot(token string) (err error) {
 		return
 	}
 
+	_, err = os.Stat(path + "/langs")
+	if err != nil && !os.IsNotExist(err) {
+		return
+	} else if os.IsNotExist(err) {
+		err = os.Mkdir(path+"/langs", 644)
+		if err != nil {
+			return
+		}
+	}
+
+	err = ioutil.WriteFile(path+"/langs/interface.go", []byte(langInterface()), 644)
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile(path+"/langs/english.go", []byte(langFile("English")), 644)
+	if err != nil {
+		return
+	}
+
+	for _, lang := range langs {
+		if lang != "English" {
+			err = ioutil.WriteFile(fmt.Sprintf("%s/langs/%s.go", path, strings.ToLower(lang)), []byte(langFile(strings.Title(lang))), 644)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	goImportsPath(path + "/main.go")
 	goImportsPath(path + "/app/app.go")
 	goImportsPath(path + "/app/appprivate.go")
@@ -113,6 +143,7 @@ func NewBot(token string) (err error) {
 	goImportsPath(path + "/app/appgroup.go")
 	goImportsPath(path + "/app/apppollanswer.go")
 	goImportsPath(path + "/app/appmiddleware.go")
+	goImportsPath(path + "/langs/.")
 
 	return
 }
