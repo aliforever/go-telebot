@@ -136,7 +136,7 @@ func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *go_telegr
 	uh.pollAnswer.Func.Call(uh.bot.appWithUpdate(app, update, &update.PollAnswer.User.Id))
 }
 
-func (uh *updateHandlers) processUpdate(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processUpdate(app reflect.Value, update go_telegram_bot_api.Update) {
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message
@@ -151,18 +151,18 @@ func (uh *updateHandlers) processUpdate(app reflect.Value, update *go_telegram_b
 		channelPost = update.EditedChannelPost
 	}
 	if message != nil && (message.Chat.Type == "group" || message.Chat.Type == "supergroup") {
-		uh.processMessageTypeGroup(app, update)
+		uh.processMessageTypeGroup(app, &update)
 	} else if channelPost != nil {
-		uh.processChannelPost(app, update)
+		uh.processChannelPost(app, &update)
 	} else if update.MyChatMember != nil {
-		uh.processMyChatMember(app, update)
+		uh.processMyChatMember(app, &update)
 	} else if update.ChatMember != nil {
-		uh.processChatMember(app, update)
+		uh.processChatMember(app, &update)
 	} else if update.CallbackQuery != nil {
-		uh.processCallbackQuery(app, update)
+		uh.processCallbackQuery(app, &update)
 	} else if update.PollAnswer != nil {
-		uh.processPollAnswer(app, update)
+		uh.processPollAnswer(app, &update)
 	} else {
-		uh.handleProcessUpdateError(update, "message_type_not_supported")
+		uh.handleProcessUpdateError(&update, "message_type_not_supported")
 	}
 }

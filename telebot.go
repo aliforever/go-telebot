@@ -66,7 +66,7 @@ func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
 	bot.rateLimiter = limiter // commit
 }
 
-func (bot *Bot) updateReplyStateNotExists(update *go_telegram_bot_api.Update, state string) {
+func (bot *Bot) updateReplyStateNotExists(update go_telegram_bot_api.Update, state string) {
 	message := update.Message
 	if message == nil {
 		message = update.EditedMessage
@@ -79,7 +79,7 @@ func (bot *Bot) updateReplyStateNotExists(update *go_telegram_bot_api.Update, st
 	return
 }
 
-func (bot *Bot) updateReplyStateInternalError(update *go_telegram_bot_api.Update) {
+func (bot *Bot) updateReplyStateInternalError(update go_telegram_bot_api.Update) {
 	j, _ := json.Marshal(update)
 	log.Errorf("Error getting user state: %s. For update: %s", update, string(j))
 	return
@@ -115,12 +115,12 @@ func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
-func (bot *Bot) invoke(app reflect.Value, update *go_telegram_bot_api.Update, method string, isSwitched bool) {
+func (bot *Bot) invoke(app reflect.Value, update go_telegram_bot_api.Update, method string, isSwitched bool) {
 	if app.MethodByName(method).Kind() == reflect.Invalid {
 		bot.updateReplyStateNotExists(update, method)
 		return
 	}
-	values := app.MethodByName(method).Call([]reflect.Value{reflect.ValueOf(update), reflect.ValueOf(isSwitched)})
+	values := app.MethodByName(method).Call([]reflect.Value{reflect.ValueOf(&update), reflect.ValueOf(isSwitched)})
 	if len(values) == 1 {
 		if val, ok := values[0].Interface().(string); ok {
 			if val != "" {
@@ -143,7 +143,7 @@ func (bot *Bot) invokeMiddleware(app reflect.Value, update *go_telegram_bot_api.
 	return
 }
 
-func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
+func (bot *Bot) processUpdate(update go_telegram_bot_api.Update) {
 	defer func() {
 		if err := recover(); err != nil {
 			// log.Errorf("recovered from panic: %s\n%s", err, debug.Stack())
@@ -153,7 +153,7 @@ func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
 	}()
 
 	app := bot.newApp()
-	if ignoreUpdate := bot.invokeMiddleware(app, update); ignoreUpdate {
+	if ignoreUpdate := bot.invokeMiddleware(app, &update); ignoreUpdate {
 		return
 	}
 	var message *structs.Message
@@ -199,7 +199,7 @@ func (bot *Bot) Poll() (err error) {
 		if bot.rateLimiter != nil && bot.rateLimiter.ShouldLimitUpdate(&update) {
 			continue
 		}
-		go bot.processUpdate(&update)
+		go bot.processUpdate(update)
 	}
 	return
 }

@@ -21,6 +21,7 @@ func (app *App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (ne
 		fmt.Println("unknown", string(j))
 		return
 	}
+	app.Send(app.Message().SetText("Hi").SetReplyToMessageId(message.MessageId))
 	if !isSwitched {
 		if message.Text == "Hello" {
 			app.Send(app.Message().SetText("Hi Bruh!"))
