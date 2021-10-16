@@ -104,6 +104,10 @@ func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_
 }
 
 func (bot *Bot) invoke(app reflect.Value, update *go_telegram_bot_api.Update, method string, isSwitched bool) {
+	if app.MethodByName(method).Kind() == reflect.Invalid {
+		bot.updateReplyStateNotExists(update, method)
+		return
+	}
 	values := app.MethodByName(method).Call([]reflect.Value{reflect.ValueOf(update), reflect.ValueOf(isSwitched)})
 	if len(values) == 1 {
 		if val, ok := values[0].Interface().(string); ok {
