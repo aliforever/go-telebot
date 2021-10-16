@@ -21,6 +21,7 @@ type Bot struct {
 	stateStorage   UserStateStorage
 	reflectType    reflect.Type
 	updateHandlers *updateHandlers
+	rateLimiter    RateLimiter
 	isOfAPIType    bool
 }
 
@@ -59,6 +60,10 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 
 func (bot *Bot) SetUserStateStorage(storage UserStateStorage) {
 	bot.stateStorage = storage
+}
+
+func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
+	bot.rateLimiter = limiter
 }
 
 func (bot *Bot) updateReplyStateNotExists(update *go_telegram_bot_api.Update, state string) {
@@ -190,6 +195,9 @@ func (bot *Bot) Poll() (err error) {
 	for update := range bot.api.GetUpdates().SetAllowedUpdates(allowedUpdates).LongPoll() {
 		if err = update.Error(); err != nil {
 			return
+		}
+		if bot.rateLimiter != nil && bot.rateLimiter.ShouldLimitUpdate(update) {
+			continue
 		}
 		go bot.processUpdate(update)
 	}
