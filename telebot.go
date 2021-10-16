@@ -62,6 +62,13 @@ func (bot *Bot) SetUserStateStorage(storage UserStateStorage) {
 }
 
 func (bot *Bot) updateReplyStateNotExists(update *go_telegram_bot_api.Update, state string) {
+	message := update.Message
+	if message == nil {
+		message = update.EditedMessage
+	}
+	if message != nil {
+		bot.stateStorage.SetUserState(message.Chat.Id, "Welcome")
+	}
 	j, _ := json.Marshal(update)
 	log.Errorf("Handler for State: %s was not found!\n%s", state, string(j))
 	return
