@@ -9,7 +9,7 @@ import (
 	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
 )
 
-func (app App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
+func (app *App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message

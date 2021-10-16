@@ -152,8 +152,8 @@ func (bot *Bot) processUpdate(update *go_telegram_bot_api.Update) {
 			bot.updateReplyStateInternalError(update)
 			return
 		}
-		_, exists := bot.reflectType.MethodByName(state)
-		if !exists {
+		// _, exists := bot.reflectType.MethodByName(state)
+		if app.MethodByName(state).Kind() == reflect.Invalid {
 			bot.updateReplyStateNotExists(update, state)
 			return
 		}
