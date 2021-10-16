@@ -63,7 +63,7 @@ func (bot *Bot) SetUserStateStorage(storage UserStateStorage) {
 }
 
 func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
-	bot.rateLimiter = limiter
+	bot.rateLimiter = limiter // commit
 }
 
 func (bot *Bot) updateReplyStateNotExists(update *go_telegram_bot_api.Update, state string) {
