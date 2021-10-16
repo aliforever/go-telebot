@@ -196,10 +196,10 @@ func (bot *Bot) Poll() (err error) {
 		if err = update.Error(); err != nil {
 			return
 		}
-		if bot.rateLimiter != nil && bot.rateLimiter.ShouldLimitUpdate(update) {
+		if bot.rateLimiter != nil && bot.rateLimiter.ShouldLimitUpdate(&update) {
 			continue
 		}
-		go bot.processUpdate(update)
+		go bot.processUpdate(&update)
 	}
 	return
 }
