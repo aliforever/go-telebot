@@ -163,7 +163,7 @@ func (bot *Bot) processUpdate(update go_telegram_bot_api.Update) {
 		message = update.EditedMessage
 	}
 	if message != nil && message.Chat.Type == "private" {
-		state, err := bot.stateStorage.UserState(update.Message.Chat.Id)
+		state, err := bot.stateStorage.UserState(message.Chat.Id)
 		if err != nil {
 			bot.updateReplyStateInternalError(update)
 			return
