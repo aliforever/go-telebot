@@ -153,6 +153,9 @@ func (bot *Bot) processUpdate(update go_telegram_bot_api.Update) {
 	}()
 
 	app := bot.newApp()
+	api := *bot.api
+	app.Elem().Field(0).Set(reflect.ValueOf(api))
+
 	if ignoreUpdate := bot.invokeMiddleware(app, &update); ignoreUpdate {
 		return
 	}
