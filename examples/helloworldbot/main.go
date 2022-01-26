@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	token := "796493295:AAE3EGLAnba_XAsp_ts3sbPTHpW3nitBc4s"
+	token := "357820880:AAHYTDRZtSCgcVgkSAlhRuntE-8gJNnU2IE"
 
 	var (
 		bot *telebot.Bot

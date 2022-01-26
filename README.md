@@ -27,7 +27,7 @@ func main() {
 ## Package Conventions
 - The concept of `State` is used for private chats. [Read Below this section]
 - Updates are divided to different handlers based on update types and each handler has its own file inside app package (eg: appprivate.go, appcallback.go)
-  - app.go is your structure. You can embed `go_telegram_bot_api.TelegramBot` there to have easier access to bot api methods and I recommend to keep it that way unless you prefer another way.
+  - app.go is your structure. You can embed `tgbotapi.TelegramBot` there to have easier access to bot api methods and I recommend to keep it that way unless you prefer another way.
   - appprivate.go file has 2 methods (`Welcome` & `Hello`) on the fly for welcoming users and responding hello to their hello! `Welcome` method should always be there for the bot to work. (This will change so you can use your own default method)
 
 - (Removing any of these methods will stop the bot from receiving the respected update types) 🔽🔽:
@@ -48,7 +48,7 @@ For private chats your users are going to communicate to your bot through menus,
 Your `State` handler methods should have this signature:
 
 ```go
-func (app App) StateName(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {}
+func (app App) StateName(update *tgbotapi.Update, isSwitched bool) (newState string) {}
 ```
   - The framework is going to pass the updates of private chats based on their states to their respected handlers and inside the handlers you'll have access to the update using the first argument: `update`.
   - The second argument `isSwitched` is for when you're sending a user to another menu without processing their last sent text. It's for the next menu to be aware that there are no new updates from the user and the handler should ignore checking for them.

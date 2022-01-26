@@ -2,12 +2,12 @@ package telebot
 
 import (
 	"flag"
+	tgbotapi "github.com/aliforever/go-telegram-bot-api"
 	"os"
 	"strings"
 
 	"github.com/aliforever/go-telebot/generator"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func init() {
 	}
 	if newFlag != "" {
 		defer os.Exit(1)
-		_, err := go_telegram_bot_api.NewTelegramBot(newFlag)
+		_, err := tgbotapi.NewTelegramBot(newFlag)
 		if err != nil {
 			log.Error("error creating new bot", err)
 			return

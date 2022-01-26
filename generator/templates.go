@@ -63,11 +63,11 @@ func appTemplate() (str string) {
 	str = `package app
 
 import (
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
 type App struct {
-	go_telegram_bot_api.TelegramBot
+	tgbotapi.TelegramBot
 }
 `
 	return
@@ -77,10 +77,10 @@ func appCallbackTemplate() (str string) {
 	str = `package app
 
 import (
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) CallbackQueryHandler(update *go_telegram_bot_api.Update) {
+func (app App) CallbackQueryHandler(update *tgbotapi.Update) {
 	data := update.CallbackQuery.Data
 	app.Send(app.AnswerCallbackQuery().SetCallbackQueryId(update.CallbackQuery.Id).SetText(data))
 }`
@@ -94,10 +94,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) ChatMemberHandler(update *go_telegram_bot_api.Update) {
+func (app App) ChatMemberHandler(update *tgbotapi.Update) {
 	j, _ := json.Marshal(update)
 	fmt.Println("chat_member update", string(j))
 }
@@ -112,10 +112,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) PollAnswerHandler(update *go_telegram_bot_api.Update) {
+func (app App) PollAnswerHandler(update *tgbotapi.Update) {
 	j, _ := json.Marshal(update)
 	fmt.Println("PollAnswer update", string(j))
 }
@@ -127,10 +127,10 @@ func appMiddlewareTemplate() (str string) {
 	str = `package app
 
 import (
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) Middleware(update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
+func (app App) Middleware(update *tgbotapi.Update) (ignoreUpdate bool) {
 	return
 }
 `
@@ -143,10 +143,10 @@ func appGroupTemplate() (str string) {
 import (
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) MessageTypeGroupHandler(update *go_telegram_bot_api.Update) {
+func (app App) MessageTypeGroupHandler(update *tgbotapi.Update) {
 	app.Send(app.Message().SetText(fmt.Sprintf("This message is from Group: %s", update.Message.Chat.Title)))
 }
 `
@@ -160,10 +160,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) MyChatMemberHandler(update *go_telegram_bot_api.Update) {
+func (app App) MyChatMemberHandler(update *tgbotapi.Update) {
 	j, _ := json.Marshal(update)
 	fmt.Println("chat_member update", string(j))
 }
@@ -177,10 +177,10 @@ func appChannelTemplate() (str string) {
 import (
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) ChannelPostHandler(update *go_telegram_bot_api.Update) {
+func (app App) ChannelPostHandler(update *tgbotapi.Update) {
 	app.Send(app.Message().SetText(fmt.Sprintf("This message is from Channel: %s", update.ChannelPost.Chat.Title)))
 }
 `
@@ -193,10 +193,10 @@ func appPrivateTemplate() (str string) {
 import (
 	"fmt"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	 "github.com/aliforever/go-telegram-bot-api"
 )
 
-func (app App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
+func (app App) Welcome(update *tgbotapi.Update, isSwitched bool) (newState string) {
 	if update.Message != nil && update.Message.Text != "" {
 		if !isSwitched {
 			if update.Message.Text == "Hello" {
@@ -213,7 +213,7 @@ func (app App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (new
 	return
 }
 
-func (app App) Hello(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
+func (app App) Hello(update *tgbotapi.Update, isSwitched bool) (newState string) {
 	if !isSwitched {
 		if update.Message.Text == "Back" {
 			newState = "Welcome"

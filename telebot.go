@@ -4,20 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aliforever/go-telegram-bot-api"
 	"reflect"
 	"runtime/debug"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/GoLibs/telegram-bot-api/structs"
-
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	"github.com/aliforever/go-telegram-bot-api/structs"
 )
 
 type Bot struct {
 	token          string
 	botInterface   interface{}
-	api            *go_telegram_bot_api.TelegramBot
+	api            *tgbotapi.TelegramBot
 	stateStorage   UserStateStorage
 	reflectType    reflect.Type
 	updateHandlers *updateHandlers
@@ -25,13 +24,13 @@ type Bot struct {
 	isOfAPIType    bool
 }
 
-func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *go_telegram_bot_api.TelegramBot, err error) {
+func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *tgbotapi.TelegramBot, err error) {
 	if reflect.ValueOf(app).Kind() == reflect.Ptr {
 		appName := reflect.ValueOf(app).Elem().Type().Name()
 		err = errors.New(fmt.Sprintf("pass_app_without_pointer_as_%s{}_not_&%s{}", appName, appName))
 		return
 	}
-	api, err = go_telegram_bot_api.NewTelegramBot(token)
+	api, err = tgbotapi.NewTelegramBot(token)
 	if err != nil {
 		return
 	}
@@ -66,7 +65,7 @@ func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
 	bot.rateLimiter = limiter // commit
 }
 
-func (bot *Bot) updateReplyStateNotExists(update go_telegram_bot_api.Update, state string) {
+func (bot *Bot) updateReplyStateNotExists(update tgbotapi.Update, state string) {
 	message := update.Message
 	if message == nil {
 		message = update.EditedMessage
@@ -79,7 +78,7 @@ func (bot *Bot) updateReplyStateNotExists(update go_telegram_bot_api.Update, sta
 	return
 }
 
-func (bot *Bot) updateReplyStateInternalError(update go_telegram_bot_api.Update) {
+func (bot *Bot) updateReplyStateInternalError(update tgbotapi.Update) {
 	j, _ := json.Marshal(update)
 	log.Errorf("Error getting user state: %s. For update: %s", update, string(j))
 	return
@@ -91,7 +90,7 @@ func (bot *Bot) newApp() reflect.Value {
 	return app
 }
 
-func (bot *Bot) appWithUpdate(app reflect.Value, update *go_telegram_bot_api.Update, defaultRecipient *int64) []reflect.Value {
+func (bot *Bot) appWithUpdate(app reflect.Value, update *tgbotapi.Update, defaultRecipient *int64) []reflect.Value {
 	api := *bot.api
 
 	if bot.isOfAPIType {
@@ -103,7 +102,7 @@ func (bot *Bot) appWithUpdate(app reflect.Value, update *go_telegram_bot_api.Upd
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
-func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_bot_api.Update) []reflect.Value {
+func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *tgbotapi.Update) []reflect.Value {
 	app := reflect.New(bot.reflectType)
 	api := *bot.api
 	if defaultRecipientId != nil {
@@ -115,7 +114,7 @@ func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *go_telegram_
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
-func (bot *Bot) invoke(app reflect.Value, update go_telegram_bot_api.Update, method string, isSwitched bool) {
+func (bot *Bot) invoke(app reflect.Value, update tgbotapi.Update, method string, isSwitched bool) {
 	if app.MethodByName(method).Kind() == reflect.Invalid {
 		bot.updateReplyStateNotExists(update, method)
 		return
@@ -131,7 +130,7 @@ func (bot *Bot) invoke(app reflect.Value, update go_telegram_bot_api.Update, met
 	}
 }
 
-func (bot *Bot) invokeMiddleware(app reflect.Value, update *go_telegram_bot_api.Update) (ignoreUpdate bool) {
+func (bot *Bot) invokeMiddleware(app reflect.Value, update *tgbotapi.Update) (ignoreUpdate bool) {
 	middlewareMethod := app.MethodByName("Middleware")
 	if middlewareMethod.Kind() == reflect.Invalid {
 		return
@@ -143,7 +142,7 @@ func (bot *Bot) invokeMiddleware(app reflect.Value, update *go_telegram_bot_api.
 	return
 }
 
-func (bot *Bot) processUpdate(update go_telegram_bot_api.Update) {
+func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
 			// log.Errorf("recovered from panic: %s\n%s", err, debug.Stack())
@@ -176,9 +175,12 @@ func (bot *Bot) processUpdate(update go_telegram_bot_api.Update) {
 			bot.updateReplyStateNotExists(update, state)
 			return
 		}
-		api := *bot.api
+		/*api := *bot.api
+
+		 */
+		apiField := app.Elem().Field(0)
 		api.SetRecipientChatId(message.Chat.Id)
-		app.Elem().Field(0).Set(reflect.ValueOf(api))
+		apiField.Set(reflect.ValueOf(api))
 		bot.invoke(app, update, state, false)
 		return
 	}

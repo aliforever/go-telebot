@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/GoLibs/telegram-bot-api/structs"
-
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
+	"github.com/aliforever/go-telegram-bot-api/structs"
 )
 
-func (app *App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
+func (app *App) Welcome(update *tgbotapi.Update, isSwitched bool) (newState string) {
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message
@@ -58,7 +56,7 @@ func (app *App) Welcome(update *go_telegram_bot_api.Update, isSwitched bool) (ne
 	return
 }
 
-func (app App) Bye(update *go_telegram_bot_api.Update, isSwitched bool) (newState string) {
+func (app App) Bye(update *tgbotapi.Update, isSwitched bool) (newState string) {
 	if !isSwitched {
 		if update.Message.Text == "Back" {
 			fmt.Println(app.CustomField)

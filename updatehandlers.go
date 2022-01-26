@@ -2,11 +2,11 @@ package telebot
 
 import (
 	"encoding/json"
+	"github.com/aliforever/go-telegram-bot-api"
 	"reflect"
 
-	"github.com/GoLibs/telegram-bot-api/structs"
+	"github.com/aliforever/go-telegram-bot-api/structs"
 
-	go_telegram_bot_api "github.com/GoLibs/telegram-bot-api"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -74,12 +74,12 @@ func (uh *updateHandlers) allowedUpdates() (allowedUpdates []string) {
 	return
 }
 
-func (uh *updateHandlers) handleProcessUpdateError(update *go_telegram_bot_api.Update, message string) {
+func (uh *updateHandlers) handleProcessUpdateError(update *tgbotapi.Update, message string) {
 	j, _ := json.Marshal(update)
 	log.Errorf("Error processing update: %s. Update: %s", message, j)
 }
 
-func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *tgbotapi.Update) {
 	if uh.messageTypeGroup.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for Group Message Type was not found!\n%s", string(j))
@@ -88,7 +88,7 @@ func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *go_
 	uh.messageTypeGroup.Func.Call(uh.bot.appWithUpdate(app, update, &update.Message.Chat.Id))
 }
 
-func (uh *updateHandlers) processChannelPost(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processChannelPost(app reflect.Value, update *tgbotapi.Update) {
 	if uh.channelPost.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for ChannelPost was not found!\n%s", string(j))
@@ -98,7 +98,7 @@ func (uh *updateHandlers) processChannelPost(app reflect.Value, update *go_teleg
 	uh.channelPost.Func.Call(uh.bot.appWithUpdate(app, update, &update.ChannelPost.Chat.Id))
 }
 
-func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *tgbotapi.Update) {
 	if uh.myChatMember.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for MyChatMember was not found!\n%s", string(j))
@@ -107,7 +107,7 @@ func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *go_tele
 	uh.myChatMember.Func.Call(uh.bot.appWithUpdate(app, update, &update.MyChatMember.Chat.Id))
 }
 
-func (uh *updateHandlers) processChatMember(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processChatMember(app reflect.Value, update *tgbotapi.Update) {
 	if uh.chatMember.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for ChatMember was not found!\n%s", string(j))
@@ -117,7 +117,7 @@ func (uh *updateHandlers) processChatMember(app reflect.Value, update *go_telegr
 	uh.chatMember.Func.Call(uh.bot.appWithUpdate(app, update, &update.ChatMember.Chat.Id))
 }
 
-func (uh *updateHandlers) processCallbackQuery(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processCallbackQuery(app reflect.Value, update *tgbotapi.Update) {
 	if uh.callbackQuery.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for CallbackQuery was not found!\n%s", string(j))
@@ -127,7 +127,7 @@ func (uh *updateHandlers) processCallbackQuery(app reflect.Value, update *go_tel
 	uh.callbackQuery.Func.Call(uh.bot.appWithUpdate(app, update, &update.CallbackQuery.Message.Chat.Id))
 }
 
-func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *tgbotapi.Update) {
 	if uh.pollAnswer.Name == "" {
 		j, _ := json.Marshal(update)
 		log.Errorf("Handler for PollAnswer was not found!\n%s", string(j))
@@ -136,7 +136,7 @@ func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *go_telegr
 	uh.pollAnswer.Func.Call(uh.bot.appWithUpdate(app, update, &update.PollAnswer.User.Id))
 }
 
-func (uh *updateHandlers) processUpdate(app reflect.Value, update go_telegram_bot_api.Update) {
+func (uh *updateHandlers) processUpdate(app reflect.Value, update tgbotapi.Update) {
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message
