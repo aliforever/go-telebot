@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	tgbotapi "github.com/aliforever/go-telegram-bot-api"
 
 	"github.com/aliforever/go-telegram-bot-api/structs"
 )
