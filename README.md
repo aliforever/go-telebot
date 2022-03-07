@@ -77,3 +77,7 @@ The framework is using `reflect` package in the background to match states to th
 ## Contibution
 To help building telegram bots easier and more fun using `go-telebot`, you can open an issue or contact me on Telegram [@ali_error](https://t.me/ali_error)
 
+## Bots made by telebot
+[Taskilibot](https://t.me/taskilibot): A bot to manage your tasks
+
+[Linkulubot](https://t.me/linkulubot): A bot to convert telegram videos to direct download links
