@@ -153,11 +153,17 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 
 	app := bot.newApp()
 	api := *bot.api
+
+	if update.From() != nil {
+		api.SetRecipientChatId(update.From().Id)
+	}
+
 	app.Elem().Field(0).Set(reflect.ValueOf(api))
 
 	if ignoreUpdate := bot.invokeMiddleware(app, &update); ignoreUpdate {
 		return
 	}
+
 	var message *structs.Message
 	if update.Message != nil {
 		message = update.Message
