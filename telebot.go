@@ -17,11 +17,11 @@ type Bot struct {
 	token          string
 	botInterface   interface{}
 	api            *tgbotapi.TelegramBot
-	stateStorage   UserStateStorage
 	reflectType    reflect.Type
 	updateHandlers *updateHandlers
 	rateLimiter    RateLimiter
 	isOfAPIType    bool
+	options        *BotOptions
 }
 
 func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *tgbotapi.TelegramBot, err error) {
@@ -37,13 +37,19 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 
 	t := reflect.TypeOf(app)
 
-	defaultUserStateStorage := newStateStorage()
+	if options == nil {
+		options = NewOptions()
+	}
+	if options.stateStorage == nil {
+		options.stateStorage = newStateStorage()
+	}
+
 	bot = &Bot{
 		token:        token,
 		botInterface: app,
 		api:          api,
-		stateStorage: defaultUserStateStorage,
 		reflectType:  t,
+		options:      options,
 	}
 	bot.updateHandlers = updateHandlersFromType(bot, t)
 
@@ -57,8 +63,10 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 	return
 }
 
+// SetUserStateStorage is deprecated
+// Pass state storage as an option instead
 func (bot *Bot) SetUserStateStorage(storage UserStateStorage) {
-	bot.stateStorage = storage
+
 }
 
 func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
@@ -71,7 +79,7 @@ func (bot *Bot) updateReplyStateNotExists(update tgbotapi.Update, state string) 
 		message = update.EditedMessage
 	}
 	if message != nil {
-		bot.stateStorage.SetUserState(message.Chat.Id, "Welcome")
+		bot.options.stateStorage.SetUserState(message.Chat.Id, "Welcome")
 	}
 	j, _ := json.Marshal(update)
 	log.Errorf("Handler for State: %s was not found!\n%s", state, string(j))
@@ -123,7 +131,7 @@ func (bot *Bot) invoke(app reflect.Value, update tgbotapi.Update, method string,
 	if len(values) == 1 {
 		if val, ok := values[0].Interface().(string); ok {
 			if val != "" {
-				bot.stateStorage.SetUserState(update.Message.Chat.Id, val)
+				bot.options.stateStorage.SetUserState(update.Message.Chat.Id, val)
 				bot.invoke(app, update, val, true)
 			}
 		}
@@ -156,6 +164,9 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 
 	if update.From() != nil {
 		api.SetRecipientChatId(update.From().Id)
+		if bot.options.useStorage != nil {
+			bot.options.useStorage.Store(update.From())
+		}
 	}
 
 	app.Elem().Field(0).Set(reflect.ValueOf(api))
@@ -171,7 +182,7 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 		message = update.EditedMessage
 	}
 	if message != nil && message.Chat.Type == "private" {
-		state, err := bot.stateStorage.UserState(message.Chat.Id)
+		state, err := bot.options.stateStorage.UserState(message.Chat.Id)
 		if err != nil {
 			bot.updateReplyStateInternalError(update)
 			return

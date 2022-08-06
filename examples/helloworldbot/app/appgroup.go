@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	tgbotapi "github.com/aliforever/go-telegram-bot-api"
 )
 
 func (app App) MessageTypeGroupHandler(update *tgbotapi.Update) {
