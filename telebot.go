@@ -88,7 +88,9 @@ func (bot *Bot) updateReplyStateNotExists(update tgbotapi.Update, state string) 
 
 func (bot *Bot) updateReplyStateInternalError(update tgbotapi.Update) {
 	j, _ := json.Marshal(update)
-	log.Errorf("Error getting user state: %s. For update: %s", update, string(j))
+
+	log.Errorf("Error getting user state: %+v. For update: %s", update, string(j))
+
 	return
 }
 
@@ -181,9 +183,11 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	} else if update.EditedMessage != nil {
 		message = update.EditedMessage
 	}
+
 	if message != nil && message.Chat.Type == "private" {
 		state, err := bot.options.stateStorage.UserState(message.Chat.Id)
 		if err != nil {
+			bot.options.stateStorage.SetUserState(message.Chat.Id, "Welcome")
 			bot.updateReplyStateInternalError(update)
 			return
 		}
@@ -201,6 +205,7 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 		bot.invoke(app, update, state, false)
 		return
 	}
+
 	if bot.updateHandlers == nil {
 		return
 	}
