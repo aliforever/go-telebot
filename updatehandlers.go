@@ -104,6 +104,7 @@ func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *tgbotap
 		log.Errorf("Handler for MyChatMember was not found!\n%s", string(j))
 		return
 	}
+
 	uh.myChatMember.Func.Call(uh.bot.appWithUpdate(app, update, &update.MyChatMember.Chat.Id))
 }
 

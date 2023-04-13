@@ -30,7 +30,7 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		err = errors.New(fmt.Sprintf("pass_app_without_pointer_as_%s{}_not_&%s{}", appName, appName))
 		return
 	}
-	api, err = tgbotapi.NewTelegramBot(token)
+	api, err = tgbotapi.New(token)
 	if err != nil {
 		return
 	}
@@ -209,7 +209,9 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	if bot.updateHandlers == nil {
 		return
 	}
+
 	bot.updateHandlers.processUpdate(app, update)
+
 	return
 }
 
@@ -219,7 +221,9 @@ func (bot *Bot) Poll() (err error) {
 		allowedUpdates = bot.updateHandlers.allowedUpdates()
 	}
 
-	for update := range bot.api.GetUpdates().SetAllowedUpdates(allowedUpdates).LongPoll() {
+	go bot.api.GetUpdates().SetAllowedUpdates(allowedUpdates).LongPoll()
+
+	for update := range bot.api.Updates() {
 		if err = update.Error(); err != nil {
 			return
 		}
