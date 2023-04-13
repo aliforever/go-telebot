@@ -27,7 +27,7 @@ func init() {
 	}
 	if newFlag != "" {
 		defer os.Exit(1)
-		_, err := tgbotapi.NewTelegramBot(newFlag)
+		_, err := tgbotapi.New(newFlag)
 		if err != nil {
 			log.Error("error creating new bot", err)
 			return
