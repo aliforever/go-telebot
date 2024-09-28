@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aliforever/go-telegram-bot-api"
 	"reflect"
 	"runtime/debug"
+
+	"github.com/aliforever/go-telegram-bot-api"
 
 	log "github.com/sirupsen/logrus"
 
@@ -216,12 +217,19 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 }
 
 func (bot *Bot) Poll() (err error) {
-	var allowedUpdates []string = []string{"message", "edited_message"}
-	if bot.updateHandlers != nil {
-		allowedUpdates = bot.updateHandlers.allowedUpdates()
+	gu := bot.api.GetUpdates()
+
+	if !bot.options.getAllUpdates {
+		var allowedUpdates = []string{"message", "edited_message"}
+
+		if bot.updateHandlers != nil {
+			allowedUpdates = bot.updateHandlers.allowedUpdates()
+		}
+
+		gu.SetAllowedUpdates(allowedUpdates)
 	}
 
-	go bot.api.GetUpdates().SetAllowedUpdates(allowedUpdates).LongPoll()
+	go gu.LongPoll()
 
 	for update := range bot.api.Updates() {
 		if err = update.Error(); err != nil {
