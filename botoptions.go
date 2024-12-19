@@ -1,9 +1,12 @@
 package telebot
 
+import "log/slog"
+
 type BotOptions struct {
 	stateStorage  UserStateStorage
 	useStorage    UserStorage
 	getAllUpdates bool
+	logger        *slog.Logger
 }
 
 func NewOptions() *BotOptions {
@@ -22,5 +25,10 @@ func (b *BotOptions) SetUserStorage(ss UserStorage) *BotOptions {
 
 func (b *BotOptions) GetAllUpdates() *BotOptions {
 	b.getAllUpdates = true
+	return b
+}
+
+func (b *BotOptions) SetLogger(logger *slog.Logger) *BotOptions {
+	b.logger = logger
 	return b
 }

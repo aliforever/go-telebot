@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"runtime/debug"
 
@@ -31,6 +32,7 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		err = errors.New(fmt.Sprintf("pass_app_without_pointer_as_%s{}_not_&%s{}", appName, appName))
 		return
 	}
+
 	api, err = tgbotapi.New(token)
 	if err != nil {
 		return
@@ -41,6 +43,7 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 	if options == nil {
 		options = NewOptions()
 	}
+
 	if options.stateStorage == nil {
 		options.stateStorage = newStateStorage()
 	}
@@ -52,22 +55,19 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		reflectType:  t,
 		options:      options,
 	}
+
 	bot.updateHandlers = updateHandlersFromType(bot, t)
 
 	var v = reflect.ValueOf(app)
 	if reflect.ValueOf(app).Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+
 	if v.NumField() > 0 && v.Field(0).Type().AssignableTo(reflect.TypeOf(api).Elem()) {
 		bot.isOfAPIType = true
 	}
+
 	return
-}
-
-// SetUserStateStorage is deprecated
-// Pass state storage as an option instead
-func (bot *Bot) SetUserStateStorage(storage UserStateStorage) {
-
 }
 
 func (bot *Bot) SetRateLimiter(limiter RateLimiter) {
@@ -87,10 +87,14 @@ func (bot *Bot) updateReplyStateNotExists(update tgbotapi.Update, state string) 
 	return
 }
 
-func (bot *Bot) updateReplyStateInternalError(update tgbotapi.Update) {
-	j, _ := json.Marshal(update)
-
-	log.Errorf("Error getting user state: %+v. For update: %s", update, string(j))
+func (bot *Bot) updateReplyStateInternalError(update tgbotapi.Update, err error) {
+	if bot.options != nil && bot.options.logger != nil {
+		bot.options.logger.Error(
+			"Error getting user state",
+			slog.Any("update", update),
+			slog.String("err", err.Error()),
+		)
+	}
 
 	return
 }
@@ -110,6 +114,7 @@ func (bot *Bot) appWithUpdate(app reflect.Value, update *tgbotapi.Update, defaul
 		}
 		app.Elem().Field(0).Set(reflect.ValueOf(api))
 	}
+
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
@@ -122,6 +127,7 @@ func (bot *Bot) newAppWithUpdate(defaultRecipientId *int64, update *tgbotapi.Upd
 	if bot.isOfAPIType {
 		app.Elem().Field(0).Set(reflect.ValueOf(api))
 	}
+
 	return []reflect.Value{app.Elem(), reflect.ValueOf(update)}
 }
 
@@ -130,6 +136,7 @@ func (bot *Bot) invoke(app reflect.Value, update tgbotapi.Update, method string,
 		bot.updateReplyStateNotExists(update, method)
 		return
 	}
+
 	values := app.MethodByName(method).Call([]reflect.Value{reflect.ValueOf(&update), reflect.ValueOf(isSwitched)})
 	if len(values) == 1 {
 		if val, ok := values[0].Interface().(string); ok {
@@ -156,9 +163,14 @@ func (bot *Bot) invokeMiddleware(app reflect.Value, update *tgbotapi.Update) (ig
 func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	defer func() {
 		if err := recover(); err != nil {
-			// log.Errorf("recovered from panic: %s\n%s", err, debug.Stack())
-			fmt.Println(err)
-			fmt.Println(string(debug.Stack()))
+			if bot.options != nil && bot.options.logger != nil {
+				bot.options.logger.Error(
+					"recovered from panic",
+					slog.Any("update", update),
+					slog.Any("err", err),
+					slog.String("stack", string(debug.Stack())),
+				)
+			}
 		}
 	}()
 
@@ -185,26 +197,31 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 		message = update.EditedMessage
 	}
 
-	if message != nil && message.Chat.Type == "private" {
-		state, err := bot.options.stateStorage.UserState(message.Chat.Id)
-		if err != nil {
-			bot.options.stateStorage.SetUserState(message.Chat.Id, "Welcome")
-			bot.updateReplyStateInternalError(update)
+	if message != nil {
+		if message.SuccessfulPayment != nil && bot.updateHandlers != nil {
+			bot.updateHandlers.processSuccessfulPayment(app, &update)
 			return
 		}
-		// _, exists := bot.reflectType.MethodByName(state)
-		if app.MethodByName(state).Kind() == reflect.Invalid {
-			bot.updateReplyStateNotExists(update, state)
-			return
-		}
-		/*api := *bot.api
 
-		 */
-		apiField := app.Elem().Field(0)
-		api.SetRecipientChatId(message.Chat.Id)
-		apiField.Set(reflect.ValueOf(api))
-		bot.invoke(app, update, state, false)
-		return
+		if message.Chat.Type == "private" {
+			state, err := bot.options.stateStorage.UserState(message.Chat.Id)
+			if err != nil {
+				bot.options.stateStorage.SetUserState(message.Chat.Id, "Welcome")
+				bot.updateReplyStateInternalError(update, err)
+				return
+			}
+
+			if app.MethodByName(state).Kind() == reflect.Invalid {
+				bot.updateReplyStateNotExists(update, state)
+				return
+			}
+
+			apiField := app.Elem().Field(0)
+			api.SetRecipientChatId(message.Chat.Id)
+			apiField.Set(reflect.ValueOf(api))
+			bot.invoke(app, update, state, false)
+			return
+		}
 	}
 
 	if bot.updateHandlers == nil {

@@ -1,13 +1,12 @@
 package telebot
 
 import (
-	"encoding/json"
-	"github.com/aliforever/go-telegram-bot-api"
+	"log/slog"
 	"reflect"
 
-	"github.com/aliforever/go-telegram-bot-api/structs"
+	"github.com/aliforever/go-telegram-bot-api"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/aliforever/go-telegram-bot-api/structs"
 )
 
 type updateHandlers struct {
@@ -22,12 +21,14 @@ type updateHandlers struct {
 	pollAnswer         reflect.Method
 	myChatMember       reflect.Method
 	chatMember         reflect.Method
+	successfulPayment  reflect.Method
 }
 
 func updateHandlersFromType(bot *Bot, t reflect.Type) (uh *updateHandlers) {
 	uh = &updateHandlers{
 		bot: bot,
 	}
+
 	uh.messageTypeGroup, _ = t.MethodByName("MessageTypeGroupHandler")
 	uh.channelPost, _ = t.MethodByName("ChannelPostHandler")
 	uh.inlineQuery, _ = t.MethodByName("InlineQueryHandler")
@@ -38,6 +39,8 @@ func updateHandlersFromType(bot *Bot, t reflect.Type) (uh *updateHandlers) {
 	uh.pollAnswer, _ = t.MethodByName("PollAnswerHandler")
 	uh.myChatMember, _ = t.MethodByName("MyChatMemberHandler")
 	uh.chatMember, _ = t.MethodByName("ChatMemberHandler")
+	uh.successfulPayment, _ = t.MethodByName("SuccessfulPaymentHandler")
+
 	return
 }
 
@@ -75,23 +78,39 @@ func (uh *updateHandlers) allowedUpdates() (allowedUpdates []string) {
 }
 
 func (uh *updateHandlers) handleProcessUpdateError(update *tgbotapi.Update, message string) {
-	j, _ := json.Marshal(update)
-	log.Errorf("Error processing update: %s. Update: %s", message, j)
+	if uh.bot.options != nil && uh.bot.options.logger != nil {
+		uh.bot.options.logger.Error(
+			"Error processing update",
+			slog.Any("update", update),
+			slog.String("err", message),
+		)
+	}
 }
 
 func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *tgbotapi.Update) {
 	if uh.messageTypeGroup.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for Group Message Type was not found!\n%s", string(j))
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
+
 	uh.messageTypeGroup.Func.Call(uh.bot.appWithUpdate(app, update, &update.Message.Chat.Id))
 }
 
 func (uh *updateHandlers) processChannelPost(app reflect.Value, update *tgbotapi.Update) {
 	if uh.channelPost.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for ChannelPost was not found!\n%s", string(j))
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
 
@@ -100,8 +119,13 @@ func (uh *updateHandlers) processChannelPost(app reflect.Value, update *tgbotapi
 
 func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *tgbotapi.Update) {
 	if uh.myChatMember.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for MyChatMember was not found!\n%s", string(j))
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
 
@@ -110,8 +134,13 @@ func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *tgbotap
 
 func (uh *updateHandlers) processChatMember(app reflect.Value, update *tgbotapi.Update) {
 	if uh.chatMember.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for ChatMember was not found!\n%s", string(j))
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
 
@@ -120,37 +149,92 @@ func (uh *updateHandlers) processChatMember(app reflect.Value, update *tgbotapi.
 
 func (uh *updateHandlers) processCallbackQuery(app reflect.Value, update *tgbotapi.Update) {
 	if uh.callbackQuery.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for CallbackQuery was not found!\n%s", string(j))
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
 
 	uh.callbackQuery.Func.Call(uh.bot.appWithUpdate(app, update, &update.CallbackQuery.Message.Chat.Id))
 }
 
-func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *tgbotapi.Update) {
-	if uh.pollAnswer.Name == "" {
-		j, _ := json.Marshal(update)
-		log.Errorf("Handler for PollAnswer was not found!\n%s", string(j))
+func (uh *updateHandlers) processPreCheckoutQuery(app reflect.Value, update *tgbotapi.Update) {
+	if uh.preCheckoutQuery.Name == "" {
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
 		return
 	}
+
+	uh.preCheckoutQuery.Func.Call(uh.bot.appWithUpdate(app, update, &update.PreCheckoutQuery.From.Id))
+}
+
+func (uh *updateHandlers) processPollAnswer(app reflect.Value, update *tgbotapi.Update) {
+	if uh.pollAnswer.Name == "" {
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
+		return
+	}
+
 	uh.pollAnswer.Func.Call(uh.bot.appWithUpdate(app, update, &update.PollAnswer.User.Id))
 }
 
+func (uh *updateHandlers) processSuccessfulPayment(app reflect.Value, update *tgbotapi.Update) {
+	if uh.successfulPayment.Name == "" {
+		if uh.bot.options != nil && uh.bot.options.logger != nil {
+			uh.bot.options.logger.Error(
+				"Error processing update",
+				slog.Any("update", update),
+				slog.String("err", "message_type_not_supported"),
+			)
+		}
+		return
+	}
+
+	uh.successfulPayment.Func.Call(uh.bot.appWithUpdate(app, update, &update.From().Id))
+}
+
 func (uh *updateHandlers) processUpdate(app reflect.Value, update tgbotapi.Update) {
-	var message *structs.Message
+	var (
+		message     *structs.Message
+		channelPost *structs.Message
+	)
+
+	if update.PreCheckoutQuery != nil {
+		uh.processPreCheckoutQuery(app, &update)
+		return
+	}
+
 	if update.Message != nil {
 		message = update.Message
 	} else if update.EditedMessage != nil {
 		message = update.EditedMessage
 	}
 
-	var channelPost *structs.Message
 	if update.ChannelPost != nil {
 		channelPost = update.ChannelPost
 	} else if update.EditedChannelPost != nil {
 		channelPost = update.EditedChannelPost
 	}
+
+	if message != nil && message.SuccessfulPayment != nil {
+		uh.processSuccessfulPayment(app, &update)
+		return
+	}
+
 	if message != nil && (message.Chat.Type == "group" || message.Chat.Type == "supergroup") {
 		uh.processMessageTypeGroup(app, &update)
 	} else if channelPost != nil {
