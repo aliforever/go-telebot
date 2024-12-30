@@ -33,7 +33,18 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		return
 	}
 
-	api, err = tgbotapi.New(token)
+	if options != nil {
+		if options.logger != nil {
+			if options.logRawUpdates {
+				api, err = tgbotapi.NewTelegramBotWithLoggerEvents(token, options.logger)
+			} else {
+				api, err = tgbotapi.NewTelegramBotWithLogger(token, options.logger)
+			}
+		}
+	} else {
+		api, err = tgbotapi.New(token)
+	}
+
 	if err != nil {
 		return
 	}
@@ -186,13 +197,9 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 
 	app.Elem().Field(0).Set(reflect.ValueOf(api))
 
-	fmt.Println("here 1", update.PreCheckoutQuery == nil)
-
 	if ignoreUpdate := bot.invokeMiddleware(app, &update); ignoreUpdate {
 		return
 	}
-
-	fmt.Println("here 2", update.PreCheckoutQuery == nil)
 
 	var message *structs.Message
 	if update.Message != nil {
@@ -200,8 +207,6 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	} else if update.EditedMessage != nil {
 		message = update.EditedMessage
 	}
-
-	fmt.Println("here 3", update.PreCheckoutQuery == nil)
 
 	if message != nil {
 		if message.SuccessfulPayment != nil && bot.updateHandlers != nil {
@@ -230,13 +235,9 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 		}
 	}
 
-	fmt.Println("here 4", update.PreCheckoutQuery == nil)
-
 	if bot.updateHandlers == nil {
 		return
 	}
-
-	fmt.Println("here 5", update.PreCheckoutQuery == nil)
 
 	bot.updateHandlers.processUpdate(app, update)
 
@@ -262,9 +263,11 @@ func (bot *Bot) Poll() (err error) {
 		if err = update.Error(); err != nil {
 			return
 		}
+
 		if bot.rateLimiter != nil && bot.rateLimiter.ShouldLimitUpdate(&update) {
 			continue
 		}
+
 		go bot.processUpdate(update)
 	}
 	return

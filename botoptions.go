@@ -7,6 +7,7 @@ type BotOptions struct {
 	useStorage    UserStorage
 	getAllUpdates bool
 	logger        *slog.Logger
+	logRawUpdates bool
 }
 
 func NewOptions() *BotOptions {
@@ -30,5 +31,10 @@ func (b *BotOptions) GetAllUpdates() *BotOptions {
 
 func (b *BotOptions) SetLogger(logger *slog.Logger) *BotOptions {
 	b.logger = logger
+	return b
+}
+
+func (b *BotOptions) LogRawUpdates() *BotOptions {
+	b.logRawUpdates = true
 	return b
 }
