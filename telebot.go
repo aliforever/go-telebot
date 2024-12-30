@@ -186,9 +186,13 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 
 	app.Elem().Field(0).Set(reflect.ValueOf(api))
 
+	fmt.Println("here 1", update.PreCheckoutQuery == nil)
+
 	if ignoreUpdate := bot.invokeMiddleware(app, &update); ignoreUpdate {
 		return
 	}
+
+	fmt.Println("here 2", update.PreCheckoutQuery == nil)
 
 	var message *structs.Message
 	if update.Message != nil {
@@ -196,6 +200,8 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 	} else if update.EditedMessage != nil {
 		message = update.EditedMessage
 	}
+
+	fmt.Println("here 3", update.PreCheckoutQuery == nil)
 
 	if message != nil {
 		if message.SuccessfulPayment != nil && bot.updateHandlers != nil {
@@ -224,9 +230,13 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 		}
 	}
 
+	fmt.Println("here 4", update.PreCheckoutQuery == nil)
+
 	if bot.updateHandlers == nil {
 		return
 	}
+
+	fmt.Println("here 5", update.PreCheckoutQuery == nil)
 
 	bot.updateHandlers.processUpdate(app, update)
 
