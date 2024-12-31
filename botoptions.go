@@ -40,7 +40,7 @@ func (b *BotOptions) LogRawUpdates() *BotOptions {
 	return b
 }
 
-func (b *BotOptions) SetAPIServerURL(url *string) *BotOptions {
-	b.apiServerURL = url
+func (b *BotOptions) SetAPIServerURL(url string) *BotOptions {
+	b.apiServerURL = &url
 	return b
 }
