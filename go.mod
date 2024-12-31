@@ -3,7 +3,7 @@ module github.com/aliforever/go-telebot
 go 1.23
 
 require (
-	github.com/aliforever/go-telegram-bot-api v0.5.7
+	github.com/aliforever/go-telegram-bot-api v0.5.8
 	github.com/sirupsen/logrus v1.9.3
 )
 
