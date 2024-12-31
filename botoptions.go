@@ -8,6 +8,7 @@ type BotOptions struct {
 	getAllUpdates bool
 	logger        *slog.Logger
 	logRawUpdates bool
+	apiServerURL  *string
 }
 
 func NewOptions() *BotOptions {
@@ -36,5 +37,10 @@ func (b *BotOptions) SetLogger(logger *slog.Logger) *BotOptions {
 
 func (b *BotOptions) LogRawUpdates() *BotOptions {
 	b.logRawUpdates = true
+	return b
+}
+
+func (b *BotOptions) SetAPIServerURL(url *string) *BotOptions {
+	b.apiServerURL = url
 	return b
 }
