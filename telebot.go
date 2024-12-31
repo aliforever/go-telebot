@@ -33,18 +33,17 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		return
 	}
 
+	var botOptions *tgbotapi.Options
+
 	if options != nil {
+		botOptions = tgbotapi.NewOptions()
+
 		if options.logger != nil {
-			if options.logRawUpdates {
-				api, err = tgbotapi.NewTelegramBotWithLoggerEvents(token, options.logger)
-			} else {
-				api, err = tgbotapi.NewTelegramBotWithLogger(token, options.logger)
-			}
+			botOptions.SetLogger(options.logger).SetLogResponses(options.logRawUpdates)
 		}
-	} else {
-		api, err = tgbotapi.New(token)
 	}
 
+	api, err = tgbotapi.New(token, botOptions)
 	if err != nil {
 		return
 	}
