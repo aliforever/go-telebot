@@ -41,6 +41,10 @@ func NewBot(token string, app interface{}, options *BotOptions) (bot *Bot, api *
 		if options.logger != nil {
 			botOptions.SetLogger(options.logger).SetLogResponses(options.logRawUpdates)
 		}
+
+		if options.apiServerURL != nil {
+			botOptions.SetApiURL(*options.apiServerURL)
+		}
 	}
 
 	api, err = tgbotapi.New(token, botOptions)
@@ -246,14 +250,20 @@ func (bot *Bot) processUpdate(update tgbotapi.Update) {
 func (bot *Bot) Poll() (err error) {
 	gu := bot.api.GetUpdates()
 
-	if !bot.options.getAllUpdates {
-		var allowedUpdates = []string{"message", "edited_message"}
+	if bot.options != nil {
+		if !bot.options.getAllUpdates {
+			var allowedUpdates = []string{"message", "edited_message"}
 
-		if bot.updateHandlers != nil {
-			allowedUpdates = bot.updateHandlers.allowedUpdates()
+			if bot.updateHandlers != nil {
+				allowedUpdates = bot.updateHandlers.allowedUpdates()
+			}
+
+			gu.SetAllowedUpdates(allowedUpdates)
 		}
 
-		gu.SetAllowedUpdates(allowedUpdates)
+		if bot.options.onGetUpdateError != nil {
+			gu.SetOnError(bot.options.onGetUpdateError)
+		}
 	}
 
 	go gu.LongPoll()

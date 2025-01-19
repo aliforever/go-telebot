@@ -1,14 +1,17 @@
 package telebot
 
-import "log/slog"
+import (
+	"log/slog"
+)
 
 type BotOptions struct {
-	stateStorage  UserStateStorage
-	useStorage    UserStorage
-	getAllUpdates bool
-	logger        *slog.Logger
-	logRawUpdates bool
-	apiServerURL  *string
+	stateStorage     UserStateStorage
+	useStorage       UserStorage
+	getAllUpdates    bool
+	logger           *slog.Logger
+	logRawUpdates    bool
+	apiServerURL     *string
+	onGetUpdateError func(err error) bool
 }
 
 func NewOptions() *BotOptions {
@@ -42,5 +45,10 @@ func (b *BotOptions) LogRawUpdates() *BotOptions {
 
 func (b *BotOptions) SetAPIServerURL(url string) *BotOptions {
 	b.apiServerURL = &url
+	return b
+}
+
+func (b *BotOptions) OnGetUpdateError(f func(err error) bool) *BotOptions {
+	b.onGetUpdateError = f
 	return b
 }
