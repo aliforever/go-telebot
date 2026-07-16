@@ -99,7 +99,17 @@ func (uh *updateHandlers) processMessageTypeGroup(app reflect.Value, update *tgb
 		return
 	}
 
-	uh.messageTypeGroup.Func.Call(uh.bot.appWithUpdate(app, update, &update.Message.Chat.Id))
+	// processUpdate routes both new and edited group messages here, so fall back
+	// to EditedMessage — update.Message is nil for an edited_message.
+	message := update.Message
+	if message == nil {
+		message = update.EditedMessage
+	}
+	if message == nil {
+		return
+	}
+
+	uh.messageTypeGroup.Func.Call(uh.bot.appWithUpdate(app, update, &message.Chat.Id))
 }
 
 func (uh *updateHandlers) processChannelPost(app reflect.Value, update *tgbotapi.Update) {
@@ -114,7 +124,17 @@ func (uh *updateHandlers) processChannelPost(app reflect.Value, update *tgbotapi
 		return
 	}
 
-	uh.channelPost.Func.Call(uh.bot.appWithUpdate(app, update, &update.ChannelPost.Chat.Id))
+	// processUpdate routes both new and edited channel posts here, so fall back
+	// to EditedChannelPost — update.ChannelPost is nil for an edited_channel_post.
+	channelPost := update.ChannelPost
+	if channelPost == nil {
+		channelPost = update.EditedChannelPost
+	}
+	if channelPost == nil {
+		return
+	}
+
+	uh.channelPost.Func.Call(uh.bot.appWithUpdate(app, update, &channelPost.Chat.Id))
 }
 
 func (uh *updateHandlers) processMyChatMember(app reflect.Value, update *tgbotapi.Update) {
